@@ -6,170 +6,170 @@
  * Licensed under the MIT license.
  */
 (function ($, window, document, undefined) {
-    "use strict";
+  "use strict";
 
-    var pluginName = 'slimmenu',
-        oldWindowWidth = 0,
-        defaults = {
-            resizeWidth: '767',
-            initiallyVisible: false,
-            collapserTitle: 'Main Menu',
-            animSpeed: 'medium',
-            easingEffect: null,
-            indentChildren: false,
-            backToNormal: false,
-            childrenIndenter: '&nbsp;&nbsp;',
-            expandIcon: '<i>&#9660;</i>',
-            collapseIcon: '<i>&#9650;</i>'
-        };
+  var pluginName = 'slimmenu',
+    oldWindowWidth = 0,
+    defaults = {
+      resizeWidth: '767',
+      initiallyVisible: false,
+      collapserTitle: 'Main Menu',
+      animSpeed: 'medium',
+      easingEffect: null,
+      indentChildren: false,
+      backToNormal: false,
+      childrenIndenter: '&nbsp;&nbsp;',
+      expandIcon: '<i>&#9660;</i>',
+      collapseIcon: '<i>&#9650;</i>'
+    };
 
-    function Plugin(element, options) {
-        this.element = element;
-        this.$elem = $(this.element);
-        this.options = $.extend(defaults, options);
-        this.init();
-    }
+  function Plugin(element, options) {
+    this.element = element;
+    this.$elem = $(this.element);
+    this.options = $.extend(defaults, options);
+    this.init();
+  }
 
-    Plugin.prototype = {
+  Plugin.prototype = {
 
-        init: function () {
-            var $window = $(window),
-                options = this.options,
-                $menu = this.$elem,
-                $collapser = '<div class="menu-collapser">' + options.collapserTitle + '<div class="collapse-button"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div></div>',
-                $menuCollapser;
+    init: function () {
+      var $window = $(window),
+        options = this.options,
+        $menu = this.$elem,
+        $collapser = '<div class="menu-collapser">' + options.collapserTitle + '<div class="collapse-button"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div></div>',
+        $menuCollapser;
 
-            $menu.before($collapser);
-            $menuCollapser = $menu.prev('.menu-collapser');
+      $menu.before($collapser);
+      $menuCollapser = $menu.prev('.menu-collapser');
 
-            $menu.on('click', 'li', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
+      $menu.on('click', 'li', function(e) {
+        /*e.preventDefault();
+        e.stopPropagation();*/
 
-              var $childSpan = $(this).children('span.sub-toggle');
+        var $childSpan = $(this).children('span.sub-toggle');
 
-              if ($childSpan.hasClass('expanded')) {
-                $childSpan.removeClass('expanded').html(options.expandIcon);
-                $(this).find('>ul').slideUp(options.animSpeed, options.easingEffect);
-              } else {
-                $childSpan.addClass('expanded').html(options.collapseIcon);
-                $(this).find('>ul').slideDown(options.animSpeed, options.easingEffect);
+        if ($childSpan.hasClass('expanded')) {
+          $childSpan.removeClass('expanded').html(options.expandIcon);
+          $(this).find('>ul').slideUp(options.animSpeed, options.easingEffect);
+        } else {
+          $childSpan.addClass('expanded').html(options.collapseIcon);
+          $(this).find('>ul').slideDown(options.animSpeed, options.easingEffect);
+        }
+      });
+
+      $menu.on('click', '.sub-toggle', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $parentLi = $(this).closest('li');
+
+        if ($(this).hasClass('expanded')) {
+          $(this).removeClass('expanded').html(options.expandIcon);
+          $parentLi.find('>ul').slideUp(options.animSpeed, options.easingEffect);
+        } else {
+          $(this).addClass('expanded').html(options.collapseIcon);
+          $parentLi.find('>ul').slideDown(options.animSpeed, options.easingEffect);
+        }
+      });
+
+      $menuCollapser.on('click', function (e) {
+        e.preventDefault();
+        $menu.slideToggle(options.animSpeed, options.easingEffect);
+      });
+
+      this.resizeMenu();
+      $window.on('resize', this.resizeMenu.bind(this));
+      $window.trigger('resize');
+    },
+
+    resizeMenu: function () {
+      var self = this,
+        $window = $(window),
+        windowWidth = $window.width(),
+        $options = this.options,
+        $menu = $(this.element),
+        $menuCollapser = $('body').find('.menu-collapser');
+
+      if (window['innerWidth'] !== undefined) {
+        if (window['innerWidth'] > windowWidth) {
+          windowWidth = window['innerWidth'];
+        }
+      }
+
+      if (windowWidth != oldWindowWidth) {
+        oldWindowWidth = windowWidth;
+
+        $menu.find('li').each(function () {
+          if ($(this).has('ul').length) {
+            if ($(this).addClass('has-submenu').has('.sub-toggle').length) {
+              $(this).children('.sub-toggle').html($options.expandIcon);
+            } else {
+              $(this).addClass('has-submenu').append('<span class="sub-toggle">' + $options.expandIcon + '</span>');
+            }
+          }
+
+          $(this).children('ul').hide().end().find('.sub-toggle').removeClass('expanded').html($options.expandIcon);
+        });
+
+        if ($options.resizeWidth >= windowWidth) {
+          if ($options.indentChildren) {
+            $menu.find('ul').each(function () {
+              var $depth = $(this).parents('ul').length;
+              if (!$(this).children('li').children('a').has('i').length) {
+                $(this).children('li').children('a').prepend(self.indent($depth, $options));
               }
             });
+          }
 
-            $menu.on('click', '.sub-toggle', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
+          $menu.addClass('collapsed').find('li').has('ul').off('mouseenter mouseleave');
+          $menuCollapser.show();
 
-                var $parentLi = $(this).closest('li');
-
-                if ($(this).hasClass('expanded')) {
-                    $(this).removeClass('expanded').html(options.expandIcon);
-                    $parentLi.find('>ul').slideUp(options.animSpeed, options.easingEffect);
-                } else {
-                    $(this).addClass('expanded').html(options.collapseIcon);
-                    $parentLi.find('>ul').slideDown(options.animSpeed, options.easingEffect);
+          if (!$options.initiallyVisible) {
+            $menu.hide();
+          }
+        } else {
+          if (!$options.backToNormal) {
+            $menu.find('li').has('ul')
+              .on('mouseenter', function () {
+                $(this).find('>ul').stop().slideDown($options.animSpeed, $options.easingEffect);
+              })
+              .on('mouseleave', function () {
+                $(this).find('>ul').stop().slideUp($options.animSpeed, $options.easingEffect);
+              });
+          } else {
+            $menu.find('li').each(function () {
+              if ($(this).has('ul').length) {
+                if ($(this).addClass('has-submenu').has('.sub-toggle').length) {
+                  $(this).removeClass('has-submenu').children('.sub-toggle').remove();
+                  $(this).children('ul').show();
                 }
+              }
             });
-
-            $menuCollapser.on('click', function (e) {
-                e.preventDefault();
-                $menu.slideToggle(options.animSpeed, options.easingEffect);
-            });
-
-            this.resizeMenu();
-            $window.on('resize', this.resizeMenu.bind(this));
-            $window.trigger('resize');
-        },
-
-        resizeMenu: function () {
-            var self = this,
-                $window = $(window),
-                windowWidth = $window.width(),
-                $options = this.options,
-                $menu = $(this.element),
-                $menuCollapser = $('body').find('.menu-collapser');
-
-            if (window['innerWidth'] !== undefined) {
-                if (window['innerWidth'] > windowWidth) {
-                    windowWidth = window['innerWidth'];
-                }
-            }
-
-            if (windowWidth != oldWindowWidth) {
-                oldWindowWidth = windowWidth;
-
-                $menu.find('li').each(function () {
-                    if ($(this).has('ul').length) {
-                        if ($(this).addClass('has-submenu').has('.sub-toggle').length) {
-                            $(this).children('.sub-toggle').html($options.expandIcon);
-                        } else {
-                            $(this).addClass('has-submenu').append('<span class="sub-toggle">' + $options.expandIcon + '</span>');
-                        }
-                    }
-
-                    $(this).children('ul').hide().end().find('.sub-toggle').removeClass('expanded').html($options.expandIcon);
-                });
-
-                if ($options.resizeWidth >= windowWidth) {
-                    if ($options.indentChildren) {
-                        $menu.find('ul').each(function () {
-                            var $depth = $(this).parents('ul').length;
-                            if (!$(this).children('li').children('a').has('i').length) {
-                                $(this).children('li').children('a').prepend(self.indent($depth, $options));
-                            }
-                        });
-                    }
-
-                    $menu.addClass('collapsed').find('li').has('ul').off('mouseenter mouseleave');
-                    $menuCollapser.show();
-
-                    if (!$options.initiallyVisible) {
-                        $menu.hide();
-                    }
-                } else {
-            	    if (!$options.backToNormal) {
-                        $menu.find('li').has('ul')
-                           .on('mouseenter', function () {
-                                $(this).find('>ul').stop().slideDown($options.animSpeed, $options.easingEffect);
-                            })
-                            .on('mouseleave', function () {
-                            $(this).find('>ul').stop().slideUp($options.animSpeed, $options.easingEffect);
-                            });
-                    } else {
-                	$menu.find('li').each(function () {
-                    	if ($(this).has('ul').length) {
-	                        if ($(this).addClass('has-submenu').has('.sub-toggle').length) {
-	                        	$(this).removeClass('has-submenu').children('.sub-toggle').remove();
-	                        	$(this).children('ul').show();
-	                        }
-	                    }
-	                });
-                    }
-                    $menu.find('li > a > i').remove();
-                    $menu.removeClass('collapsed').show();
-                    $menuCollapser.hide();
-                }
-            }
-        },
-
-        indent: function (num, options) {
-            var i = 0,
-                $indent = '';
-            for (; i < num; i++) {
-                $indent += options.childrenIndenter;
-            }
-            return '<i>' + $indent + '</i> ';
+          }
+          $menu.find('li > a > i').remove();
+          $menu.removeClass('collapsed').show();
+          $menuCollapser.hide();
         }
-    };
+      }
+    },
 
-    $.fn[pluginName] = function (options) {
-        return this.each(function () {
-            if (!$.data(this, 'plugin_' + pluginName)) {
-                $.data(this, 'plugin_' + pluginName,
-                    new Plugin(this, options));
-            }
-        });
-    };
+    indent: function (num, options) {
+      var i = 0,
+        $indent = '';
+      for (; i < num; i++) {
+        $indent += options.childrenIndenter;
+      }
+      return '<i>' + $indent + '</i> ';
+    }
+  };
+
+  $.fn[pluginName] = function (options) {
+    return this.each(function () {
+      if (!$.data(this, 'plugin_' + pluginName)) {
+        $.data(this, 'plugin_' + pluginName,
+          new Plugin(this, options));
+      }
+    });
+  };
 
 }(jQuery, window, document));
