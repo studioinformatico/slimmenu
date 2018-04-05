@@ -42,6 +42,21 @@
             $menu.before($collapser);
             $menuCollapser = $menu.prev('.menu-collapser');
 
+            $menu.on('click', 'li', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              var $childSpan = $(this).children('span.sub-toggle');
+
+              if ($childSpan.hasClass('expanded')) {
+                $childSpan.removeClass('expanded').html(options.expandIcon);
+                $(this).find('>ul').slideUp(options.animSpeed, options.easingEffect);
+              } else {
+                $childSpan.addClass('expanded').html(options.collapseIcon);
+                $(this).find('>ul').slideDown(options.animSpeed, options.easingEffect);
+              }
+            });
+
             $menu.on('click', '.sub-toggle', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -57,7 +72,7 @@
                 }
             });
 
-            $menuCollapser.on('click', '.collapse-button', function (e) {
+            $menuCollapser.on('click', function (e) {
                 e.preventDefault();
                 $menu.slideToggle(options.animSpeed, options.easingEffect);
             });
